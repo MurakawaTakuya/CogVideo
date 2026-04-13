@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+
 # Prevent tokenizer parallelism issues
 export TOKENIZERS_PARALLELISM=false
 
 # Model Configuration
 MODEL_ARGS=(
-    --model_path "THUDM/CogVideoX1.5-5B"
+    --model_path "$REPO_ROOT/models/CogVideoX1.5-5B"
     --model_name "cogvideox1.5-t2v"  # ["cogvideox-t2v"]
     --model_type "t2v"
     --training_type "lora"
@@ -13,13 +15,13 @@ MODEL_ARGS=(
 
 # Output Configuration
 OUTPUT_ARGS=(
-    --output_dir "/absolute/path/to/your/output_dir"
+    --output_dir "$REPO_ROOT/finetune/outputs/cogvideox1.5-5b-lora-t2v"
     --report_to "tensorboard"
 )
 
 # Data Configuration
 DATA_ARGS=(
-    --data_root "/absolute/path/to/your/data_root"
+    --data_root "$REPO_ROOT/finetune/data/train"
     --caption_column "prompt.txt"
     --video_column "videos.txt"
     --train_resolution "81x768x1360"  # (frames x height x width), frames should be 8N+1
@@ -45,20 +47,20 @@ SYSTEM_ARGS=(
 CHECKPOINT_ARGS=(
     --checkpointing_steps 10 # save checkpoint every x steps
     --checkpointing_limit 2 # maximum number of checkpoints to keep, after which the oldest one is deleted
-    --resume_from_checkpoint "/absolute/path/to/checkpoint_dir"  # if you want to resume from a checkpoint, otherwise, comment this line
+    # --resume_from_checkpoint "$REPO_ROOT/finetune/outputs/cogvideox1.5-5b-lora-t2v/checkpoint-XXX"
 )
 
 # Validation Configuration
 VALIDATION_ARGS=(
     --do_validation false  # ["true", "false"]
-    --validation_dir "/absolute/path/to/your/validation_set"
+    --validation_dir "$REPO_ROOT/finetune/data/val"
     --validation_steps 20  # should be multiple of checkpointing_steps
     --validation_prompts "prompts.txt"
     --gen_fps 16
 )
 
 # Combine all arguments and launch training
-accelerate launch train.py \
+accelerate launch --config_file accelerate_config_ddp.yaml train.py \
     "${MODEL_ARGS[@]}" \
     "${OUTPUT_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
