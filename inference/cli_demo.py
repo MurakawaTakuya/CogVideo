@@ -66,6 +66,7 @@ def generate_video(
     generate_type: str = Literal["t2v", "i2v", "v2v"],  # i2v: image to video, v2v: video to video
     seed: int = 42,
     fps: int = 16,
+    cpu_offload: str = "sequential",  # "none", "model", "sequential"
 ):
     """
     Generates a video based on the given prompt and saves it to the specified path.
@@ -142,12 +143,12 @@ def generate_video(
     )
 
     # 3. Enable CPU offload for the model.
-    # turn off if you have multiple GPUs or enough GPU memory(such as H100) and it will cost less time in inference
-    # and enable to("cuda")
-    # pipe.to("cuda")
-
-    # pipe.enable_model_cpu_offload()
-    pipe.enable_sequential_cpu_offload()
+    if cpu_offload == "sequential":
+        pipe.enable_sequential_cpu_offload()
+    elif cpu_offload == "model":
+        pipe.enable_model_cpu_offload()
+    else:  # "none"
+        pipe.to("cuda")
     pipe.vae.enable_slicing()
     pipe.vae.enable_tiling()
 
@@ -248,6 +249,13 @@ if __name__ == "__main__":
         "--dtype", type=str, default="bfloat16", help="The data type for computation"
     )
     parser.add_argument("--seed", type=int, default=42, help="The seed for reproducibility")
+    parser.add_argument(
+        "--cpu_offload",
+        type=str,
+        default="sequential",
+        choices=["none", "model", "sequential"],
+        help="CPU offload mode: 'none' (fastest, needs large VRAM), 'model', 'sequential' (slowest, least VRAM)",
+    )
 
     args = parser.parse_args()
     dtype = torch.float16 if args.dtype == "float16" else torch.bfloat16
@@ -268,4 +276,5 @@ if __name__ == "__main__":
         generate_type=args.generate_type,
         seed=args.seed,
         fps=args.fps,
+        cpu_offload=args.cpu_offload,
     )

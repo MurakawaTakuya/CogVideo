@@ -1,0 +1,21 @@
+compute_environment: LOCAL_MACHINE
+
+# GPU 0: RTX PRO 6000 Blackwell 94GB -- LoRA (rank128) requires ~35GB, so single GPU is sufficient.
+# To use all 4 GPUs, change gpu_ids to "0,1,2,3" and num_processes to 4.
+gpu_ids: "0"
+num_processes: 1
+
+debug: false
+distributed_type: NO
+downcast_bf16: 'no'
+enable_cpu_affinity: false
+machine_rank: 0
+main_training_function: main
+mixed_precision: bf16
+num_machines: 1
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
